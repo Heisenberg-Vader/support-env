@@ -13,7 +13,7 @@ app = create_app(
 
 # NEW: Add a main function to start the server
 def main():
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=7860)
 
 # NEW: Add the execution guard
 if __name__ == "__main__":
