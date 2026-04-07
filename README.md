@@ -9,7 +9,7 @@ app_port: 7860
 app_file: server/app.py
 ---
 
-# 🎫 OpenEnv: Customer Support Environment
+# OpenEnv: Customer Support Environment
 
 An interactive, RL-ready benchmark environment built on the [OpenEnv](https://github.com/meta-pytorch/openenv) framework. This project simulates a Helpdesk/Customer Support ticketing system to test the reasoning, tool-use, and resolution capabilities of Large Language Models (LLMs) and autonomous agents.
 
@@ -17,7 +17,7 @@ An interactive, RL-ready benchmark environment built on the [OpenEnv](https://gi
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
 ![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-yellow)
 
-## 📌 Overview
+## Overview
 
 The **Customer Support Environment** acts as an HTTP-based reinforcement learning environment. AI agents interact with the system by receiving observations (open tickets, KB search results, feedback) and must output strict JSON actions to triage, research, and resolve user issues.
 
@@ -30,7 +30,7 @@ The **Customer Support Environment** acts as an HTTP-based reinforcement learnin
 
 ---
 
-## 🎮 The Environment
+## The Environment
 
 ### 1. Observations
 At each step, the agent receives a JSON observation representing the current state of the helpdesk:
@@ -65,7 +65,7 @@ The environment supports different task scenarios dynamically loaded upon reset:
 
 ---
 
-## 🚀 Local Setup & Installation
+## Local Setup & Installation
 
 This project uses `uv` for lightning-fast dependency management.
 
@@ -89,7 +89,7 @@ This project uses `uv` for lightning-fast dependency management.
 
 ---
 
-## 🤖 Testing an Agent
+## Testing an Agent
 
 A baseline evaluation script (`inference.py`) is included to test models against the environment using the OpenAI API spec (compatible with Hugging Face Serverless Inference).
 
