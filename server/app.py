@@ -4,7 +4,6 @@ from openenv.core.env_server.http_server import create_app
 from models import SupportAction, SupportObservation
 from server.environment import HelpdeskEnvironment
 
-# Create the FastAPI app
 app = create_app(
     HelpdeskEnvironment,
     SupportAction,
@@ -12,7 +11,6 @@ app = create_app(
     env_name="support_env",
 )
 
-# --- NEW: Add a visual landing page for human visitors ---
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return """

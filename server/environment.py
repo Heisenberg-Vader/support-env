@@ -9,46 +9,22 @@ from openenv.core.env_server.interfaces import Environment
 from openenv.core.env_server.types import State
 
 class HelpdeskEnvironment(Environment):
-    # This tells OpenEnv it can run multiple agents testing this at the same time
     SUPPORTS_CONCURRENT_SESSIONS = False
 
     def __init__(self):
-        # OpenEnv will automatically override this when testing different tasks
         self.task_name = "easy_password_reset" 
         self.step_count = 0
         self.max_steps = 10
         
-        # State variables
         self.tickets = {}
         self.kb = {}
         self.current_ticket_id = None
         self.kb_results = None
         self.feedback = ""
-
-    # def _setup_task(self):
-    #     """Loads the specific task data based on the difficulty requested."""
-    #     if self.task_name == "easy_password_reset":
-    #         self.tickets = {"T-101": {"id": "T-101", "subject": "Can't log in", "body": "I forgot my password.", "status": "open"}}
-    #         self.kb = {"password": "To reset password, go to https://example.com/reset"}
-            
-    #     elif self.task_name == "medium_billing_refund":
-    #         self.tickets = {"T-201": {"id": "T-201", "subject": "Refund requested", "body": "I want a refund.", "status": "open"}}
-    #         self.kb = {"refund": "Refunds must be escalated to the 'billing' department."}
-            
-    #     elif self.task_name == "hard_multi_ticket_outage":
-    #         self.tickets = {
-    #             "T-301": {"id": "T-301", "subject": "Site down", "body": "502 error", "status": "open"},
-    #             "T-302": {"id": "T-302", "subject": "API failing", "body": "502 gateway", "status": "open"}
-    #         }
-    #         self.kb = {"502": "Known AWS outage. Tell users we are working on it and resolve the ticket."}
         
-    #     self.current_ticket_id = None
-    #     self.kb_results = None
-    #     self.feedback = "Environment initialized."
     def _setup_task(self):
         """Loads the specific task data based on the difficulty requested."""
         
-        # --- Bulletproof fallback if OpenEnv loses the task name ---
         if not getattr(self, "task_name", None):
             self.task_name = "easy_password_reset"
 
@@ -74,15 +50,8 @@ class HelpdeskEnvironment(Environment):
         self.kb_results = None
         self.feedback = "Environment initialized."
 
-    # def reset(self) -> SupportObservation:
-    #     """Called at the start of every episode."""
-    #     self.step_count = 0
-    #     self.reward = 0.0
-    #     self.done = False
-    #     self._setup_task()
-    #     return self._get_obs()
     def reset(self, task_name: str = "easy_password_reset") -> SupportObservation:
-        self.task_name = task_name # Set the environment to the requested task
+        self.task_name = task_name
         self.step_count = 0
         self.reward = 0.0
         self.done = False
