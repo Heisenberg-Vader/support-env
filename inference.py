@@ -11,7 +11,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 TASK_NAME = os.getenv("MY_ENV_V4_TASK", "easy_password_reset")
 BENCHMARK = os.getenv("MY_ENV_V4_BENCHMARK", "support_env")
-ENV_URL = os.getenv("ENV_URL", "http://localhost:8000") 
+ENV_URL = os.getenv("ENV_URL", "http://127.0.0.1:8000") 
 
 MAX_STEPS = 10
 SUCCESS_SCORE_THRESHOLD = 0.5 
@@ -41,6 +41,23 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> No
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
 
+# def get_model_action(client: OpenAI, obs_json: dict) -> str:
+#     prompt = f"Observation:\n{json.dumps(obs_json, indent=2)}\n\nNext JSON action:"
+#     try:
+#         completion = client.chat.completions.create(
+#             model=MODEL_NAME,
+#             messages=[
+#                 {"role": "system", "content": SYSTEM_PROMPT},
+#                 {"role": "user", "content": prompt},
+#             ],
+#             temperature=0.1,
+#             max_tokens=150,
+#             stream=False,
+#         )
+#         return (completion.choices[0].message.content or "").strip()
+#     except Exception as exc:
+#         return '{"action": "search_kb", "query": "error"}'
+
 def get_model_action(client: OpenAI, obs_json: dict) -> str:
     prompt = f"Observation:\n{json.dumps(obs_json, indent=2)}\n\nNext JSON action:"
     try:
@@ -56,6 +73,7 @@ def get_model_action(client: OpenAI, obs_json: dict) -> str:
         )
         return (completion.choices[0].message.content or "").strip()
     except Exception as exc:
+        print(f"\n[DEBUG] LLM API Call Failed: {exc}\n", flush=True)
         return '{"action": "search_kb", "query": "error"}'
 
 async def main() -> None:
@@ -69,7 +87,13 @@ async def main() -> None:
 
     async with httpx.AsyncClient(base_url=ENV_URL, timeout=30.0) as http_client:
         # Reset Env via HTTP
-        resp = await http_client.post("/reset", json={"task_name": TASK_NAME})
+        resp = await http_client.post("/reset")
+        
+        # --- NEW: Catch server errors instantly ---
+        if resp.status_code != 200:
+            print(f"[FATAL] Server returned {resp.status_code}: {resp.text}")
+            return
+            
         obs = resp.json().get("observation", {})
         
         for step in range(1, MAX_STEPS + 1):
@@ -78,10 +102,19 @@ async def main() -> None:
             try:
                 action_payload = json.loads(action_str)
             except:
-                action_payload = {"action": "list_tickets"} # Fallback if LLM outputs bad JSON
+                action_payload = {"action": "list_tickets"} 
             
             # Step Env via HTTP
-            resp = await http_client.post("/step", json=action_payload)
+            # resp = await http_client.post("/step", json=action_payload)
+            
+            resp = await http_client.post("/step", json={"action": action_payload})
+            
+            if resp.status_code != 200:
+                print(f"[FATAL] Step {step} failed with {resp.status_code}")
+                # This will print EXACTLY which field is missing or wrong:
+                print(f"Error Detail: {resp.text}")
+                break
+                
             step_data = resp.json()
             
             obs = step_data.get("observation", {})

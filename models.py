@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional, Literal
+from openenv.core.env_server.types import Action, Observation
 
 class Ticket(BaseModel):
     id: str
@@ -7,13 +8,15 @@ class Ticket(BaseModel):
     body: str
     status: str
 
-class SupportObservation(BaseModel):
+# --- Inherit from Observation instead of BaseModel ---
+class SupportObservation(Observation):
     open_tickets: List[str] = Field(default_factory=list, description="IDs of currently open tickets.")
     current_ticket: Optional[Ticket] = Field(None, description="Details of the currently viewed ticket.")
     kb_search_results: Optional[str] = Field(None, description="Results from the last KB search.")
     feedback: str = Field("", description="System feedback from the last action.")
 
-class SupportAction(BaseModel):
+# --- Inherit from Action instead of BaseModel ---
+class SupportAction(Action):
     action: Literal["list_tickets", "view_ticket", "search_kb", "reply_and_resolve", "escalate"]
     ticket_id: Optional[str] = Field(None, description="Target ticket ID.")
     query: Optional[str] = Field(None, description="Search query for KB.")
