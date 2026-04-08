@@ -79,7 +79,7 @@ async def main() -> None:
             except Exception as e:
                 if attempt == max_retries - 1:
                     print(f"[FATAL] Failed to connect to environment after {max_retries} attempts. Error: {e}")
-                    return # Exit cleanly
+                    return
                 print(f"Waiting for server to wake up... (Attempt {attempt + 1}/{max_retries})")
                 await asyncio.sleep(3)
         
