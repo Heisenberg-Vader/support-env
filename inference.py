@@ -5,13 +5,12 @@ import httpx
 from typing import List, Optional
 from openai import OpenAI
 
-# --- Configuration matching the Prompt Requirements ---
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY", "dummy")
+API_KEY = os.getenv("HF_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 TASK_NAME = os.getenv("MY_ENV_V4_TASK", "easy_password_reset")
 BENCHMARK = os.getenv("MY_ENV_V4_BENCHMARK", "support_env")
-ENV_URL = os.getenv("ENV_URL", "http://127.0.0.1:8000") 
+ENV_URL = os.getenv("ENV_URL", "http://127.0.0.1:7860") 
 
 MAX_STEPS = 10
 SUCCESS_SCORE_THRESHOLD = 0.5 
@@ -69,10 +68,25 @@ async def main() -> None:
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
     async with httpx.AsyncClient(base_url=ENV_URL, timeout=30.0) as http_client:
-        resp = await http_client.post("/reset")
         
-        if resp.status_code != 200:
-            print(f"[FATAL] Server returned {resp.status_code}: {resp.text}")
+        max_retries = 5
+        resp = None
+        for attempt in range(max_retries):
+            try:
+                resp = await http_client.post("/reset")
+                resp.raise_for_status()
+                break
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    print(f"[FATAL] Failed to connect to environment after {max_retries} attempts. Error: {e}")
+                    return # Exit cleanly
+                print(f"Waiting for server to wake up... (Attempt {attempt + 1}/{max_retries})")
+                await asyncio.sleep(3)
+        
+        if resp is None or resp.status_code != 200:
+            status = resp.status_code if resp else "Unknown"
+            text = resp.text if resp else "No response"
+            print(f"[FATAL] Server returned {status}: {text}")
             return
             
         obs = resp.json().get("observation", {})
@@ -85,11 +99,11 @@ async def main() -> None:
             except:
                 action_payload = {"action": "list_tickets"} 
             
-            resp = await http_client.post("/step", json={"action": action_payload})
-            
-            if resp.status_code != 200:
-                print(f"[FATAL] Step {step} failed with {resp.status_code}")
-                print(f"Error Detail: {resp.text}")
+            try:
+                resp = await http_client.post("/step", json={"action": action_payload})
+                resp.raise_for_status()
+            except Exception as e:
+                print(f"[FATAL] Step {step} failed with error: {e}")
                 break
                 
             step_data = resp.json()
